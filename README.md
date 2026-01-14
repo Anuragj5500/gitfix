@@ -1,14 +1,6 @@
-
+🛡️ GitFix AI: Autonomous Self-Healing Code Infrastructure
 ---
-
-### **Step 1: Create the file**
-
-Create a file named `README.md` in your `gitfix-agent` folder.
-
-### **Step 2: Copy and Paste this content**
-
 ```markdown
-# 🛡️ GitFix AI: Autonomous Self-Healing Code Infrastructure
 
 **GitFix** is an advanced Agentic AI system designed to automatically diagnose, repair, and verify broken Python code. Unlike standard AI assistants, GitFix operates in a "Think-Execute-Verify" loop, ensuring that every fix it proposes is objectively functional.
 
