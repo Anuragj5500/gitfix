@@ -7,10 +7,10 @@ from langchain_core.messages import HumanMessage
 from langgraph.graph import StateGraph, END
 from sandbox.container_mgr import Sandbox  # Import our smart sandbox
 
-# Load Environment
+# Load Environment Variables
 load_dotenv()
 
-# --- 1. State ---
+# --- 1. Define State ---
 class AgentState(TypedDict):
     code_filename: str
     error_log: str
@@ -18,7 +18,7 @@ class AgentState(TypedDict):
     iterations: int
     status: str
 
-# --- 2. Nodes ---
+# --- 2. Define Nodes ---
 
 def coder_node(state: AgentState):
     # Use GitHub Models (GPT-4o)
@@ -68,15 +68,18 @@ def tester_node(state: AgentState):
         # --- REAL DOCKER EXECUTION (Local) ---
         print("🐳 Running in Docker...")
         
-        # Re-attach to the running container
-        import docker
+        # Lazy import docker so it doesn't crash on Cloud
+        import docker 
         client = docker.from_env()
-        containers = client.containers.list(filters={"ancestor": "gitfix-sandbox"})
         
+        # Find the container
+        containers = client.containers.list(filters={"ancestor": "gitfix-sandbox"})
         if not containers:
             return {"status": "failed", "error_log": "Container died unexpectedly."}
             
         container = containers[0]
+        
+        # Run pytest
         result = container.exec_run(f"pytest {state['code_filename']}")
         
         passed = (result.exit_code == 0)
@@ -110,7 +113,7 @@ def tester_node(state: AgentState):
              
         # Default Fallback (Assume fixed if it changed significantly)
         else:
-             passed = True # Assume the AI fixed it for other cases
+             passed = True 
              output = "Simulation: Fix Verified."
 
     # Return Result

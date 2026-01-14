@@ -1,4 +1,3 @@
-import docker
 import os
 
 class Sandbox:
@@ -7,13 +6,15 @@ class Sandbox:
         self.container = None
         self.is_active = False
         
-        # Try to connect to Docker
+        # Try to import and connect to Docker safely (Lazy Import)
         try:
+            import docker  # <--- WE IMPORT IT HERE NOW
             self.client = docker.from_env()
-            self.client.ping()  # Checks if the engine is actually running
+            self.client.ping()
             self.is_active = True
-        except Exception:
-            self.is_active = False  # Docker is missing or off
+        except (ImportError, Exception):
+            # If docker lib is missing (Cloud) or Engine is off (Local)
+            self.is_active = False
 
     def build_and_start(self):
         """Starts Docker ONLY if available."""
@@ -21,21 +22,27 @@ class Sandbox:
             print("⚠️ Docker unavailable. Skipping container start.")
             return
 
+        import docker  # Import here again to be safe
         print("🐳 Building Sandbox Image...")
-        self.client.images.build(path="./sandbox", tag="gitfix-sandbox")
         
-        current_dir = os.getcwd()
-        # Remove old containers if they exist
-        existing = self.client.containers.list(filters={"ancestor": "gitfix-sandbox"})
-        for c in existing:
-            c.remove(force=True)
+        try:
+            self.client.images.build(path="./sandbox", tag="gitfix-sandbox")
+            
+            current_dir = os.getcwd()
+            # Remove old containers
+            existing = self.client.containers.list(filters={"ancestor": "gitfix-sandbox"})
+            for c in existing:
+                c.remove(force=True)
 
-        self.container = self.client.containers.run(
-            "gitfix-sandbox",
-            detach=True,
-            volumes={current_dir: {'bind': '/app', 'mode': 'rw'}},
-            working_dir='/app'
-        )
+            self.container = self.client.containers.run(
+                "gitfix-sandbox",
+                detach=True,
+                volumes={current_dir: {'bind': '/app', 'mode': 'rw'}},
+                working_dir='/app'
+            )
+        except Exception as e:
+            print(f"Error starting Docker: {e}")
+            self.is_active = False
 
     def run_test(self, file_name):
         """Runs real tests if Docker is active."""
